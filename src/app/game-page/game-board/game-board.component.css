@@ -28,6 +28,11 @@
     border: 2px solid #e0e0e0; /* Light gray border on hover */
   }
 
+.no-hover {
+  pointer-events: none; /* Disable mouse events */
+  /*opacity: 0.7;*/ /* Optionally reduce opacity for visual indication */
+}
+
 img {
   width: 100%;
   background-color: transparent;

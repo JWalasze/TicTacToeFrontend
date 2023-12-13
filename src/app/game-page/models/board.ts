@@ -1,5 +1,5 @@
-export interface Board {
-  TicTacToeBoard: Tile[][];
+export interface TicTacToe {
+  board: Tile[][];
 }
 
 export enum Tile {

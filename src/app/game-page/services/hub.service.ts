@@ -1,7 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import { Board, Piece } from '../models/board';
+import { TicTacToe, Piece } from '../models/board';
 import { environment } from '../../../environment';
 import { Observable } from 'rxjs';
 
@@ -19,80 +19,108 @@ export class SignalRService {
       .build();
   }
 
-  sendPlayerInfo() {
-    this.hubConnection.on("GetPlayerInfo", async () => {
-      const promise = new Promise((resolve) => {
-        setTimeout(() => {
-          resolve("message");
-        }, 1);
-      });
-      return promise;
-    });
-  }
-
-  observeStartOfTheGame(): Observable<string> {
-    return new Observable<string>((observer) => {
-      this.hubConnection.on("GameStart", (message: string, groupName: string) => {
-        console.log(message);
-        console.log("Group name: " + groupName);
-        observer.next(groupName);
-        observer.complete();
-      });
-    });
-  }
-
-  observeChangingBoard(): Observable<[Board, Piece]> {
-    return new Observable<[Board, Piece]>((observer) => {
-      this.hubConnection.on("MadeMove", (board: string, nextMove: string, message: string) => {
-        const boardObj = JSON.parse(board) as Board;
-        const nextMoveObj = JSON.parse(nextMove) as Piece;
-        console.log(JSON.parse(board) as Board);
-        console.log(JSON.parse(nextMove) as Piece);
-        console.log(message);
-        //console.log("WHo has won???" + whoHasWOn);
-        observer.next([boardObj, nextMoveObj]);
-        observer.complete();
-      });
-    });
-  }
-
-  startConnection(): void {
-    this.hubConnection
-      .start()
-      .then(() => {
-        console.log("Session has been sucessfully created!");
-      })
-      .catch((err) => {
-        console.error("Error during setting up a session: " + err.toString());
-      });
+  startConnection(): Promise<void> {
+    return this.hubConnection.start();
   }
 
   endConnection(): void {
     this.hubConnection
       .stop()
       .then(() => {
-        console.log('Connection ' + this.hubConnection.connectionId + ' has been ended!');
+        console.log('Connection has been ended!');
       }).catch((err) => {
         console.error("Couldn't end session: " + this.hubConnection.connectionId + ": " + err.toString())
       });
   }
 
-  getConnectionState(): HubConnectionState {
-    return this.hubConnection.state;
-  }
-
-  onMadeMove(): void {
-    //this.updateBoard();
-  }
-
-  updateBoard(board: Board, whoIsNext: Piece) {
-    const boardStr = JSON.stringify(board);
-    const whoIsNextStr = JSON.stringify(whoIsNext);
-    this.hubConnection.invoke("UpdateBoardAfterMove", boardStr, whoIsNextStr, "tu pozniej group name").then(() => {
-      console.log("Method " + "'UpdateBoardAfterMove'" + " was sucessfully invoked!");
-    }).catch((err) => {
-      console.error("We have an error in invoke of the server method: " + err.toString());
+  getAssignedPiece(): Observable<string> {
+    return new Observable<string>((observer) => {
+      this.hubConnection.on("AssignPiece", (piece: string) => {
+        observer.next(piece);
+        observer.complete();
+      });
     });
   }
 
+  getGameGroupInfo(): Observable<[string, string]> {
+    return new Observable<[string, string]>((observer) => {
+      this.hubConnection.on("WhoIsMyOpponent", (opponentConnId: string, groupName: string) => {
+        observer.next([opponentConnId, groupName]);
+        observer.complete();
+      });
+    });
+  }
+
+  getOpponentData(): Observable<[number, string]> {
+    return new Observable<[number, string]>((observer) => {
+      this.hubConnection.on("ReceiveOpponentDetails", (opponentId: number, opponentUsername: string) => {
+        observer.next([opponentId, opponentUsername]);
+        observer.complete();
+      });
+    });
+  }
+
+  //Później się zastanwoić czy te pojedyncze metody nie lepiej wysylac restowo
+  sendPlayerDataToOpponent(playerId: number, playerUsername: string, opponentConnectionId: string): void {
+    this.hubConnection.invoke("SendDataToOpponent", playerId, playerUsername, opponentConnectionId)
+      .then(() => {
+        console.log("Data has been sent successfully.");
+      })
+      .catch((err) => {
+        console.error("Error while sending data to the opponent: " + err.toString())
+      });
+  }
+
+  sendPlayerReadiness(opponentConnectionId: string, groupName: string): void {
+    this.hubConnection.invoke("SendPlayerReadiness", opponentConnectionId, groupName)
+      .then(() => {
+        console.log("Info has been sent successfully.");
+      })
+      .catch((err) => {
+        console.error("Error while sending info on the server: " + err.toString())
+      });
+  }
+
+  observeStartOfTheGame(): Observable<string> {
+    return new Observable<string>((observer) => {
+      this.hubConnection.on("StartGame", (message: string) => {
+        observer.next(message);
+        observer.complete();
+      });
+    });
+  }
+  
+  updateBoard(board: TicTacToe, whoMadeMove: Piece, groupName: string) {
+    const boardStr = JSON.stringify(board);
+    const whoMadeMoveStr = JSON.stringify(whoMadeMove);
+
+    this.hubConnection.invoke("UpdateBoardAfterMove", boardStr, whoMadeMoveStr, groupName).then(() => {
+      console.log("Method " + "'UpdateBoardAfterMove'" + " was sucessfully invoked!");
+    }).catch((err) => {
+      console.error("We have an error in invokement of the server method: " + err.toString());
+    });
+  }
+  
+  observeChangingBoard(): Observable<[TicTacToe, string, string]> {
+    return new Observable<[TicTacToe, string, string]>((observer) => {
+      this.hubConnection.on("MadeMove", (board: string, nextMove: string, whoHasWon: string) => {
+        const boardObj = JSON.parse(board) as TicTacToe;
+        observer.next([boardObj, nextMove, whoHasWon]);
+      });
+    });
+  }
+
+  observeGameEnd(): Observable<Piece | null> {
+    return new Observable<Piece | null>((observer) => {
+      this.hubConnection.on("GameOver", (whoHasWon: string) => {
+        const whoHasWonObj = JSON.parse(whoHasWon) as Piece | null;
+        observer.next(whoHasWonObj);
+        observer.complete();
+      });
+    });
+  }
+
+  getConnectionState(): HubConnectionState {
+    return this.hubConnection.state;
+  }
 }

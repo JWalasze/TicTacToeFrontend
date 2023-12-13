@@ -11,25 +11,26 @@
 </div>
 
 <div class="tic-tac-toe-board">
-  <div class="row" *ngFor="let row of board.TicTacToeBoard; let row_i = index">
-    <div class="cell" *ngFor="let cell of row; let cell_i = index" (click)="onMoveClick(row_i, cell_i)" [style.background-color]="fun(row_i, cell_i)">
+  <div class="row" *ngFor="let row of game.board; let row_i = index">
 
-      <ng-container *ngIf="board.TicTacToeBoard[row_i][cell_i] == tiles.circle">
-        <img src="../../../assets/circle.png" alt=""/>
+    <div appBoardActivity
+         *ngFor="let cell of row; let cell_i = index"
+         class="cell"
+         [tileStatus]="checkIfTileIsActive(row_i, cell_i)"
+         [style.background-color]="colorIfTaken(row_i, cell_i)"
+         (click)="onMoveClick(row_i, cell_i)">
+
+      <ng-container *ngIf="game.board[row_i][cell_i] == tiles.circle">
+        <img src="../../../assets/circle.png" alt="" />
       </ng-container>
 
-      <ng-container *ngIf="board.TicTacToeBoard[row_i][cell_i] == tiles.cross">
-        <img src="../../../assets/cross.png" alt=""/>
+      <ng-container *ngIf="game.board[row_i][cell_i] == tiles.cross">
+        <img src="../../../assets/cross.png" alt="" />
       </ng-container>
 
     </div>
   </div>
 </div>
 
-<!--<div class="my" [@changeColor]="colorState" (click)="toggleColor()">Click me to change color</div>-->
 
-<button mat-button (click)="exitGame()">Give up!</button>
-<!--<button mat-button (click)="getState()">Exit game</button>
-<button mat-button (click)="endGameSession()"> END</button>-->
-
-
+<button (click)="exitGame()">I would like to give up!</button>
