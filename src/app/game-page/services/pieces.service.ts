@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Piece } from '../models/board';
+import { GameResult, Piece } from '../models/board';
 
 @Injectable({
   providedIn: 'root'
@@ -12,5 +12,15 @@ export class PiecesService {
 
   mapFromNameToValue(piece: string): Piece {
     return piece == "\"Circle\"" ? Piece.Circle : Piece.Cross;
+  }
+
+  mapGameResult(gameResult: string): GameResult {
+    switch (gameResult) {
+      case "\"Circle\"": { return GameResult.Circle; }
+      case "\"Cross\"": { return GameResult.Cross }
+      case "\"Draw\"": { return GameResult.Draw }
+      case "\"StillInGame\"": { return GameResult.StillInGame }
+      default: return GameResult.Unfinished
+    }
   }
 }

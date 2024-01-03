@@ -1,0 +1,9 @@
+<ng-container *ngIf="userAccess==userAccessMethods.signIn">
+  <app-login (userAccessEvent)="receiveUserAccessChange($event)"
+             (userAuthenticationEvent)="receiveUserAuthentication()"></app-login>
+</ng-container>
+
+<ng-container *ngIf="userAccess==userAccessMethods.signUp">
+  <app-create-account (userAccessEvent)="receiveUserAccessChange($event)"
+                      (userAuthenticationEvent)="receiveUserAuthentication()"></app-create-account>
+</ng-container>

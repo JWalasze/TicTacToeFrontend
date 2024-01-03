@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
+import { UserService } from '../../auth-page/utils/user.service';
 
 
 @Component({
@@ -11,10 +12,8 @@ import { map } from 'rxjs';
 })
 export class BeforeGameComponent implements OnInit {
 
-  @Input()
   playerId: number;
 
-  @Input()
   username: string;
 
   pageRanking = 1;
@@ -25,18 +24,14 @@ export class BeforeGameComponent implements OnInit {
 
   sizeHistory = 10;
 
-  constructor(private router: Router, private activatedRoute: ActivatedRoute) { }
+  constructor(private router: Router, private activatedRoute: ActivatedRoute, private userService: UserService) { }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap
-      .pipe(map(() => window.history.state))
-      .subscribe(data => {
-        this.playerId = data.playerId;
-        this.username = data.username;
-    });
+    this.playerId = 1;
+    this.username = this.userService.username;
   }
 
   startGame() {
-    this.router.navigate(["/game"], { state: { playerId: this.playerId, username: this.username } });
+    this.router.navigate(["/game"], { state: { playerId: 1, username: this.username } });
   }
 }

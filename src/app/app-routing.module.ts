@@ -7,9 +7,10 @@ import { BeforeGameComponent } from './wait-room/before-game/before-game.compone
 import { LoginComponent } from './auth-page/login/login.component';
 import { GameBoardComponent } from './game-page/game-board/game-board.component';
 import { CreateAccountComponent } from './auth-page/create-account/create-account.component';
+import { AuthPageComponent } from './auth-page/auth-page.component';
 
 const routes: Routes = [
-  { path: 'auth', component: LoginComponent },
+  { path: 'auth', component: AuthPageComponent },
   { path: 'wait_room', component: BeforeGameComponent },
   { path: 'game', component: GameBoardComponent },
   { path: 'create_profile', component: CreateAccountComponent}

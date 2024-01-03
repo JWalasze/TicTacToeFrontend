@@ -1,24 +1,50 @@
-<div class="login-frame">
+<ng-container *ngIf="!isConfirmationOccured">
+  <div class="login-frame">
+    <div class="title">
+      Create
+    </div>
+
+    <div class="login-container">
+      <form [formGroup]="signUpForm" class="form" (ngSubmit)="signUp()">
+        <h2>Sign up</h2>
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" formControlName="username" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" formControlName="password" />
+        </div>
+        <div class="form-group">
+          <label for="password">Retype password:</label>
+          <input type="password" id="repassword" formControlName="password" />
+        </div>
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" formControlName="email" />
+        </div>
+        <button type="submit">Create profile</button>
+      </form>
+    </div>
+
+    <button (click)="back()">Back to signing in</button>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="isConfirmationOccured">
   <div class="title">
-    Create 
+    Confirm email
   </div>
 
   <div class="login-container">
-    <form>
-      <h2>Login</h2>
+    <form [formGroup]="confirmationForm" class="form" (ngSubmit)="confirmSignUp()">
+      <h2>Confirmation</h2>
       <div class="form-group">
-        <label for="username">Username:</label>
-        <input type="text" id="username" formControlName="username" />
+        <label>Code:</label>
+        <input type="text" formControlName="code" />
       </div>
-      <div class="form-group">
-        <label for="password">Password:</label>
-        <input type="password" id="password" formControlName="password" />
-      </div>
-      <div class="form-group">
-        <label for="password">Retype password:</label>
-        <input type="password" id="repassword" formControlName="password" />
-      </div>
-      <button (click)="onClick()">Create profile</button>
+      <button type="submit">Confirm email</button>
     </form>
   </div>
-</div>
+</ng-container>
+

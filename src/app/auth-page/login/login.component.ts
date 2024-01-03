@@ -1,6 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Amplify, Auth } from 'aws-amplify';
+import { environment } from '../../../environment';
+import { UserAccess } from '../utils/wizard';
+import { UserService } from '../utils/user.service';
 
 
 @Component({
@@ -9,29 +13,60 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
+  @Output()
+  userAccessEvent = new EventEmitter<UserAccess>();
 
-  username = 'Rachet1234';
+  @Output()
+  userAuthenticationEvent = new EventEmitter();
 
-  playerId = 1;
+  loginForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private router: Router) { }
+  constructor(private fb: FormBuilder, private router: Router, private userService: UserService) {
+    Amplify.configure({
+      Auth: environment.cognito
+    });
 
-  ngOnInit(): void {
-    console.log('Login form submitted:');
-    //this.loginForm = this.fb.group({
-    //  username: ['', Validators.required],
-    //  password: ['', Validators.required],
-    //});
+    this.loginForm = this.fb.group({
+      username: ['', Validators.required],
+      password: ['', Validators.required],
+    });
   }
 
-  onSubmit() {
-    console.log("here I am")
-    this.router.navigate(["/wait_room"], { state: { playerId: this.playerId, username: this.username } });
+  get username() {
+    return this.loginForm.get('username');
+  }
+
+  get password() {
+    return this.loginForm.get('password');
+  }
+
+
+  ngOnInit(): void {
+    console.log("...");
+  }
+
+  signIn(): Promise<any> {
+    //"Player96", "Moje_haslo11!"
+    return Auth.signIn(this.username?.value, this.password?.value)
+      .then(() => {
+        console.log("Udalo sie");
+        console.log(Auth.currentSession());
+        this.userService.authenticateUser(this.password?.value, this.username?.value)
+        this.userAuthenticationEvent.emit();
+      })
+      .catch(() => {
+        console.log("Mamy error");
+      });
+  }
+
+  login() {
+    console.log("Login clicked");
+    this.signIn();
+    this.userAuthenticationEvent.emit();
   }
 
   createProfile() {
-    console.log("whatthefuck");
-    this.router.navigate(["/create_profile"]);
+    console.log("Profile clicked");
+    this.userAccessEvent.emit(UserAccess.SignUp);
   }
 }

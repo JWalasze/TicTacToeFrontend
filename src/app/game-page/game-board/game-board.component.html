@@ -1,14 +1,16 @@
-<div class="title">
-  Player1 vs Player2
-</div>
+<ng-container *ngIf="playerUsername && opponentUsername">
+  <div class="title">
+    {{playerUsername}} vs {{opponentUsername}}
+  </div>
+</ng-container>
 
-<div class="result">
+<!--<div class="result">
   And the winner is...
 </div>
 
 <div class="timer">
   00:00:05
-</div>
+</div>-->
 
 <div class="tic-tac-toe-board">
   <div class="row" *ngFor="let row of game.board; let row_i = index">
@@ -32,5 +34,7 @@
   </div>
 </div>
 
+<div class="button-conatiner">
+  <button (click)="exitGame()">{{buttonLabel}}</button>
+</div>
 
-<button (click)="exitGame()">I would like to give up!</button>

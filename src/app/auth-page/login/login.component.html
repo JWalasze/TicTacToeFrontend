@@ -4,9 +4,9 @@
   </div>
 
   <div class="login-container">
-    <div class="form">
+    <form [formGroup]="loginForm" class="form" (ngSubmit)="login()">
       <h2>Login</h2>
-      <div class="form-group">
+      <div class="form-group" >
         <label for="username">Username:</label>
         <input type="text" id="username" formControlName="username" />
       </div>
@@ -14,14 +14,14 @@
         <label for="password">Password:</label>
         <input type="password" id="password" formControlName="password" />
       </div>
-      <button (click)="onSubmit()">Login</button>
+      <button type="submit">Login</button>
       <div>
         <h2>Or</h2>
       </div>
-      <button mat-button (click)="createProfile()">
+      <button type="button" mat-button (click)="createProfile()">
         Create your profile
       </button>
-    </div>
+    </form>
   </div>
 </div>
 

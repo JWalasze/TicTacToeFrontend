@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { animate, group, state, style, transition, trigger } from '@angular/animations';
 import { SignalRService } from '../services/hub.service';
-import { TicTacToe, Piece, Tile } from '../models/board';
-import { combineLatest, filter, map } from 'rxjs';
+import { TicTacToe, Piece, Tile, GameResult } from '../models/board';
+import { Subscription, combineLatest, filter, map } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PiecesService } from '../services/pieces.service';
+import { LoaderService } from '../services/loader.service';
 
 
 @Component({
@@ -36,6 +37,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   groupName: string;
 
+  gameStatus = GameResult.StillInGame;
+
   game: TicTacToe = {
     board: [[Tile.Empty, Tile.Empty, Tile.Empty],
     [Tile.Empty, Tile.Empty, Tile.Empty],
@@ -53,31 +56,40 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   colorState = 'initial';
 
+  buttonLabel = 'I would like to give up!';
+
+  subscriptions = new Subscription();
+
   constructor(
     private signalRService: SignalRService,
     private activatedRoute: ActivatedRoute,
     private pieceService: PiecesService,
     private ref: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private loader: LoaderService
   ) { }
 
   ngOnInit(): void {
+    this.loader.enableLoadingWithMessage("Looking for a player . . .");
     this.startGameSession();
   }
 
   ngOnDestroy(): void {
     this.endGameSession();
+    this.loader.disableLoading();
   }
 
   private startGameSession(): void {
     this.signalRService.startConnection().then(() => {
 
-      combineLatest([this.signalRService.getGameGroupInfo(), this.getPlayerInfo()]).subscribe(([[opponentConnectionId, groupName], playerInfo]) => {
+      const sub1 = combineLatest([this.signalRService.getGameGroupInfo(), this.getPlayerInfo()]).subscribe(([[opponentConnectionId, groupName], playerInfo]) => {
         this.playerId = playerInfo.playerId;
         this.playerUsername = playerInfo.username;
 
         this.opponentConnectionId = opponentConnectionId;
         this.groupName = groupName;
+
+        this.loader.setMessage("Wait for player to be ready . . .");
 
         console.log("Player id: " + this.playerId);
         console.log("Player username: " + this.playerUsername);
@@ -87,47 +99,52 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
         this.sendDataToOpponent();
       });
+      this.subscriptions.add(sub1);
 
       this.getAssignedPieces();
       this.getOpponentData();
 
-      combineLatest([this.signalRService.getAssignedPiece(), this.signalRService.getOpponentData()]).subscribe(() => {
+      const sub2 = combineLatest([this.signalRService.getAssignedPiece(), this.signalRService.getOpponentData()]).subscribe(() => {
         this.signalRService.sendPlayerReadiness(this.opponentConnectionId, this.groupName);
       });
+      this.subscriptions.add(sub2);
 
       this.observeStartOfGame();
       this.observeChangingBoard();
-      this.observeEndOfGame();
     });
   }
 
   private getPlayerInfo() {
+    console.log("JESLI KURWA TEGO NIE WIDZE...");
     return this.activatedRoute.paramMap
       .pipe(map(() => window.history.state));
   }
 
   private endGameSession(): void {
+    this.subscriptions.unsubscribe();
     this.signalRService.endConnection();
   }
 
   private getAssignedPieces(): void {
-    this.signalRService.getAssignedPiece().subscribe(piece => {
+    const sub = this.signalRService.getAssignedPiece().subscribe(piece => {
       this.playerPiece = this.pieceService.mapFromNameToValue(piece);
       this.opponentPiece = this.pieceService.getOppositePiece(this.playerPiece);
 
       console.log("Player: " + this.playerPiece);
       console.log("Opponent: " + this.opponentPiece);
     });
+    this.subscriptions.add(sub);
   }
 
   private getOpponentData(): void {
-    this.signalRService.getOpponentData().subscribe(([opponentId, opponentUsername]) => {
+    const sub = this.signalRService.getOpponentData().subscribe(([opponentId, opponentUsername]) => {
       this.opponentId = opponentId;
       this.opponentUsername = opponentUsername;
 
       console.log("Opponent id: " + this.opponentId);
       console.log("Opponent username: " + this.opponentUsername);
     });
+    this.subscriptions.add(sub);
   }
 
   private sendDataToOpponent(): void {
@@ -135,61 +152,65 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private observeChangingBoard(): void {
-    this.signalRService.observeChangingBoard()
+    const sub = this.signalRService.observeChangingBoard()
       .pipe(
         filter(([, whoseTurn,]) => {
           if (whoseTurn == null) {
             return true;
           }
-          return this.pieceService.mapFromNameToValue(whoseTurn) != this.pieceService.getOppositePiece(this.playerPiece);
-        }),)
-        //map(([board,,]) => board))
+          return this.pieceService.mapFromNameToValue(whoseTurn) == this.playerPiece;
+        }))
       .subscribe(([board, whoseTurn, whoHasWon]) => {
         if (whoseTurn == null) {
-          console.log("Mamy koniec gry");
-          console.log("No i pa na to: " + whoseTurn + ", i pa na to: " + whoHasWon);
+          
           this.game = board;
           this.waitForYourTurn = true;
           this.isBoardActive = false;
 
-          if (whoHasWon == null) {
+          const gameResult = this.pieceService.mapGameResult(whoHasWon);
+          this.gameStatus = gameResult;
+
+          this.buttonLabel = 'Return to lobby';
+
+          if (gameResult == GameResult.Draw) {
             console.log("Mamy draw");
             return;
           }
-          console.log("Nie mamy draw ale zwyciezce");
+          
+          if (gameResult == GameResult.Circle) {
+            console.log("Kolko wygralo");
+            return;
+          }
+
+          if (gameResult == GameResult.Cross) {
+            console.log("Krzyzyk wygralo");
+            return;
+          }
+
           return;
         }
 
         this.game = board;
         this.waitForYourTurn = false;
         this.isBoardActive = true;
-        this.ref.detectChanges();
       });
+    this.subscriptions.add(sub);
   }
 
   private observeStartOfGame(): void {
-    this.signalRService.observeStartOfTheGame().subscribe((message) => {
+    const sub = this.signalRService.observeStartOfTheGame().subscribe((message) => {
       this.waitForYourTurn = this.playerPiece == Piece.Circle ? false : true;
       this.isBoardActive = this.playerPiece == Piece.Circle ? true : false;
-
+      this.loader.disableLoading();
       console.log(message);
     });
-  }
-
-  private observeEndOfGame(): void {
-    this.signalRService.observeGameEnd().subscribe((whoHasWon) => {
-      if (whoHasWon == null) {
-        console.log("It's a draw");
-      }
-
-      console.log("The winner is: " + whoHasWon);
-    });
+    this.subscriptions.add(sub);
   }
 
   onMoveClick(row: number, col: number): void {
     if (this.game.board[row][col] == Tile.Empty) {
       this.updateLocalBoard(row, col);
-      this.signalRService.updateBoard(this.game, this.playerPiece, this.groupName);
+      this.signalRService.updateBoard(this.game, this.playerPiece, this.groupName, this.opponentConnectionId);
     }
   }
 
@@ -212,7 +233,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   exitGame(): void {
-    this.router.navigate(['/wait_room']);
+    this.router.navigate(['/wait_room'], { state: { playerId: this.playerId, username: this.playerUsername } });
   }
 
   toggleColor() {

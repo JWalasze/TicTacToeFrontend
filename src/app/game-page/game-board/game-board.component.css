@@ -39,6 +39,10 @@ img {
 }
 
 .title {
+  margin-bottom: 15px;
+  font-family: 'Caveat', cursive;
+  font-size: 40px;
+  text-align: center;
   color: azure
 }
 
@@ -60,6 +64,12 @@ img {
   font-weight: bold;
 }
 
+.button-conatiner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 button {
   background-color: #4caf50;
   color: #fff;
@@ -68,4 +78,5 @@ button {
   border-radius: 4px;
   cursor: pointer;
   margin-bottom: 12px;
+  margin-top: 20px;
 }
