@@ -62,7 +62,7 @@ export class LoginComponent implements OnInit {
   login() {
     console.log("Login clicked");
     this.signIn();
-    this.userAuthenticationEvent.emit();
+    /*this.userAuthenticationEvent.emit();*/
   }
 
   createProfile() {

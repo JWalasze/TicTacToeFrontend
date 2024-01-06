@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:4015/api',
-  hubUrl: 'http://localhost:4015/moves',
+  apiUrl: 'http://34.192.62.5:4015/api',
+  hubUrl: 'http://34.192.62.5:4015/moves',
   apiEndpoints: {
     playerHistory: '/Ranking/GetPlayerHistory',
     globalRanking: '/Ranking/GetRanking',
