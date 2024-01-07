@@ -5,6 +5,7 @@ import { Amplify, Auth } from 'aws-amplify';
 import { environment } from '../../../environment';
 import { UserAccess } from '../utils/wizard';
 import { UserService } from '../utils/user.service';
+import { PlayerService } from '../utils/player.service';
 
 
 @Component({
@@ -12,7 +13,7 @@ import { UserService } from '../utils/user.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   @Output()
   userAccessEvent = new EventEmitter<UserAccess>();
 
@@ -21,7 +22,7 @@ export class LoginComponent implements OnInit {
 
   loginForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private router: Router, private userService: UserService) {
+  constructor(private fb: FormBuilder, private router: Router, private userService: UserService, private playerService: PlayerService) {
     Amplify.configure({
       Auth: environment.cognito
     });
@@ -40,33 +41,26 @@ export class LoginComponent implements OnInit {
     return this.loginForm.get('password');
   }
 
-
-  ngOnInit(): void {
-    console.log("...");
-  }
-
-  signIn(): Promise<any> {
-    //"Player96", "Moje_haslo11!"
+  signIn(): Promise<unknown> {
     return Auth.signIn(this.username?.value, this.password?.value)
       .then(() => {
-        console.log("Udalo sie");
+        console.log("User is signed in!");
         console.log(Auth.currentSession());
-        this.userService.authenticateUser(this.password?.value, this.username?.value)
-        this.userAuthenticationEvent.emit();
+        this.playerService.getPlayerIdByUsername(this.username?.value).subscribe((playerId) => {
+          this.userService.authenticateUser(playerId, this.username?.value)
+          this.userAuthenticationEvent.emit();
+        });
       })
-      .catch(() => {
-        console.log("Mamy error");
+      .catch((error) => {
+        console.error(error);
       });
   }
 
   login() {
-    console.log("Login clicked");
     this.signIn();
-    /*this.userAuthenticationEvent.emit();*/
   }
 
   createProfile() {
-    console.log("Profile clicked");
     this.userAccessEvent.emit(UserAccess.SignUp);
   }
 }

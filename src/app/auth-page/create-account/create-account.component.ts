@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { UserAccess } from '../utils/wizard';
-import { Amplify, Auth } from 'aws-amplify';
+import { Auth } from 'aws-amplify';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UserService } from '../utils/user.service';
+import { PlayerService } from '../utils/player.service';
 
 @Component({
   selector: 'app-create-account',
@@ -21,7 +23,7 @@ export class CreateAccountComponent {
 
   isConfirmationOccured = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private userService: UserService, private playerService: PlayerService) {
     this.signUpForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
@@ -49,9 +51,24 @@ export class CreateAccountComponent {
     return this.confirmationForm.get('code');
   }
 
-  confirmSignUp(): Promise<any> {
+  confirmSignUp(): Promise<unknown> {
     console.log("CODE: " + this.code?.value);
-    return Auth.confirmSignUp(this.email?.value, this.code?.value);
+    this.playerService.addNewPlayer(this.username?.value, this.password?.value).subscribe((playerId) => {
+      console.log("Zwrocone: " + playerId);
+      this.userService.authenticateUser(playerId, this.username?.value)
+      this.userAuthenticationEvent.emit();
+    });
+    return Auth.confirmSignUp(this.username?.value, this.code?.value
+    ).then(() => {
+      console.log("Verification completed successfully!");
+      //this.playerService.addNewPlayer(this.username?.value, this.password?.value).subscribe((playerId) => {
+      //  console.log("Zwrocone: " + playerId);
+      //  this.userService.authenticateUser(playerId, this.username?.value)
+      //  this.userAuthenticationEvent.emit();
+      //});
+      }).catch((error) => {
+        console.error(error);
+      });
   }
 
   signUp(): Promise<unknown> {
@@ -62,15 +79,14 @@ export class CreateAccountComponent {
         email: this.email?.value,
       }
     }).then(() => {
-      console.log("jest git");
+      console.log("User is signed up!");
       this.isConfirmationOccured = true;
-    }).catch(() => {
-      console.log("mamy error");
+    }).catch((error) => {
+      console.error(error);
     });
   }
 
   back() {
-    console.log("ok");
     this.userAccessEvent.emit(UserAccess.SignIn);
   }
 }

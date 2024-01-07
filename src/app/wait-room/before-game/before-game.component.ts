@@ -27,11 +27,11 @@ export class BeforeGameComponent implements OnInit {
   constructor(private router: Router, private activatedRoute: ActivatedRoute, private userService: UserService) { }
 
   ngOnInit(): void {
-    this.playerId = 1;
+    this.playerId = this.userService.playerId;
     this.username = this.userService.username;
   }
 
   startGame() {
-    this.router.navigate(["/game"], { state: { playerId: 1, username: this.username } });
+    this.router.navigate(["/game"], { state: { playerId: this.playerId, username: this.username } });
   }
 }

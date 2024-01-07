@@ -1,11 +1,13 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://34.192.62.5:4015/api',
-  hubUrl: 'http://34.192.62.5:4015/moves',
+  production: true,
+  apiUrl: 'http://localhost:4015/api',
+  hubUrl: 'http://localhost:4015/moves',
   apiEndpoints: {
     playerHistory: '/Ranking/GetPlayerHistory',
     globalRanking: '/Ranking/GetRanking',
-    playerScore: '/Ranking/GetPlayerScore'
+    playerScore: '/Ranking/GetPlayerScore',
+    addNewPlayer: '/Auth/CreateNewPlayer',
+    getPlayerIdByUsername: '/Auth/GetIdForUsername'
   },
   cognito: {
     userPoolId: 'us-east-1_fy0rOL0v4',
