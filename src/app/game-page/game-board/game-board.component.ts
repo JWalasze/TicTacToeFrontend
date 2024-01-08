@@ -39,6 +39,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   gameStatus = GameResult.StillInGame;
 
+  gameResultLabel: string;
+
   game: TicTacToe = {
     board: [[Tile.Empty, Tile.Empty, Tile.Empty],
     [Tile.Empty, Tile.Empty, Tile.Empty],
@@ -115,7 +117,6 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private getPlayerInfo() {
-    console.log("JESLI KURWA TEGO NIE WIDZE...");
     return this.activatedRoute.paramMap
       .pipe(map(() => window.history.state));
   }
@@ -174,16 +175,29 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
           if (gameResult == GameResult.Draw) {
             console.log("Mamy draw");
+            this.gameResultLabel = "It's a draw.";
             return;
           }
           
           if (gameResult == GameResult.Circle) {
             console.log("Kolko wygralo");
+            if (this.playerPiece == Piece.Circle) {
+              this.gameResultLabel = "You have won!";
+            }
+            else {
+              this.gameResultLabel = "You have lost!";
+            }
             return;
           }
 
           if (gameResult == GameResult.Cross) {
             console.log("Krzyzyk wygralo");
+            if (this.playerPiece == Piece.Cross) {
+              this.gameResultLabel = "You have won!";
+            }
+            else {
+              this.gameResultLabel = "You have lost!";
+            }
             return;
           }
 
